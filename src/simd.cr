@@ -66,7 +66,7 @@ module SIMD
         end
       {% elsif flag?(:aarch64) %}
         case supports
-        {% if flag?(:linux) %}
+        {% unless flag?(:darwin) %}
         in .sve2?
           SIMD::SVE2.new
         in .sve?
@@ -101,7 +101,7 @@ require "./simd/scalar"
   # only Linux AArch64 hardware ships SVE in practice, so we gate these files
   # entirely at compile time.  Attempting to compile them on Darwin or BSD
   # causes the Crystal compiler itself to crash with SIGILL.
-  {% if flag?(:linux) %}
+  {% unless flag?(:darwin) %}
     require "./simd/aarch64/sve"
     require "./simd/aarch64/sve2"
   {% end %}

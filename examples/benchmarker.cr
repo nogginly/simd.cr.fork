@@ -147,8 +147,10 @@ module SIMD
         code_paths << SIMD::AVX512.new if supports.avx512?
       {% elsif flag?(:aarch64) %}
         code_paths << SIMD::NEON.new if supports.neon?
+        {% if flag?(:linux) %}
         code_paths << SIMD::SVE.new if supports.sve?
         code_paths << SIMD::SVE2.new if supports.sve2?
+        {% end %}
       {% end %}
 
       code_paths

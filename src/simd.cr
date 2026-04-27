@@ -66,10 +66,12 @@ module SIMD
         end
       {% elsif flag?(:aarch64) %}
         case supports
+        {% if flag?(:linux) %}
         in .sve2?
           SIMD::SVE2.new
         in .sve?
           SIMD::SVE.new
+        {% end %}
         in .neon?
           SIMD::NEON.new
         in .avx512?, .avx2?, .sse41?, .sse2?, .none?, SIMD::SupportedSIMD
@@ -91,5 +93,16 @@ require "./simd/scalar"
 {% if flag?(:x86_64) %}
   require "./simd/x86_64/*"
 {% elsif flag?(:aarch64) %}
-  require "./simd/aarch64/*"
+  # NEON is present on all AArch64 platforms.
+  require "./simd/aarch64/neon"
+  # SVE/SVE2 use instructions that LLVM's integrated assembler rejects at
+  # compile time on any target that doesn't advertise SVE support (e.g. Apple
+  # Silicon, Raspberry Pi).  Only Linux exposes hwcap-based SVE detection and
+  # only Linux AArch64 hardware ships SVE in practice, so we gate these files
+  # entirely at compile time.  Attempting to compile them on Darwin or BSD
+  # causes the Crystal compiler itself to crash with SIGILL.
+  {% if flag?(:linux) %}
+    require "./simd/aarch64/sve"
+    require "./simd/aarch64/sve2"
+  {% end %}
 {% end %}
